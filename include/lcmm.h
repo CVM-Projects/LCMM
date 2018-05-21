@@ -2,6 +2,8 @@
 
 #ifndef _LCMM_H_
 #define _LCMM_H_
+#include <list>
+#include <cassert>
 
 namespace LCMM
 {
@@ -17,7 +19,28 @@ namespace LCMM
 		ResourceType restype = RT_None;
 	};
 
-	class MemoryManager;
+	class Object
+	{
+	protected:
+		Info lcmm_info;
+
+		friend class MemoryManager;
+	};
+
+	class MemoryManager
+	{
+	public:
+		void Alloc(Object &object) {
+			assert(object.lcmm_info.restype == RT_None);
+			object.lcmm_info.restype = RT_Owner;
+		}
+		void Delete(Object *object) {
+
+		}
+
+	private:
+		std::list<Object*> owners;
+	};
 }
 
 #endif
