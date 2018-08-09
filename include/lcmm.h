@@ -23,6 +23,26 @@ namespace LCMM
 	{
 	protected:
 		Info lcmm_info;
+		const Object *lcmm_refer = nullptr;
+
+		void set_refer(const Object &refobj) {
+			lcmm_refer = &refobj;
+		}
+		void set_restype(ResourceType type) {
+			lcmm_info.restype = type;
+		}
+		bool is(ResourceType type) const {
+			return lcmm_info.restype == type;
+		}
+		bool isnone() const {
+			return is(RT_None);
+		}
+		ResourceType restype() const {
+			return lcmm_info.restype;
+		}
+		const Object& refer() const {
+			return *lcmm_refer;
+		}
 
 		friend class MemoryManager;
 	};
@@ -31,15 +51,44 @@ namespace LCMM
 	{
 	public:
 		void Alloc(Object &object) {
-			assert(object.lcmm_info.restype == RT_None);
-			object.lcmm_info.restype = RT_Owner;
+			assert(object.isnone());
+			object.set_restype(RT_Owner);
 		}
-		void Delete(Object *object) {
-
+		void Refer(Object &object, const Object &refobj) {
+			assert(object.isnone());
+			assert(!refobj.isnone());
+			object.set_restype(RT_Refer);
+			switch (refobj.restype()) {
+			case RT_Refer:
+			case RT_Share:
+				object.set_refer(refobj.refer());
+				break;
+			case RT_Owner:
+				object.set_refer(refobj);
+				break;
+			default:
+				assert(false);
+				break;
+			}
+		}
+		void Delete(Object &object) {
+			switch (object.restype()) {
+			case RT_None:
+				break;
+			case RT_Owner:
+				break;
+			case RT_Refer:
+			case RT_Share:
+				break;
+			default:
+				assert(false);
+				break;
+			}
 		}
 
 	private:
 		std::list<Object*> owners;
+		std::list<Object*> shared_hosts;
 	};
 }
 
